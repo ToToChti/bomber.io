@@ -37,17 +37,17 @@ function textRender(text) {
 
 
 const GAMES = {
-    "Level 0": {
-      custom_code : {
-        launch: () => {
-          console.log('Hello World!')
-        },
-        next_turn: () => {},
-        win: () => {}
+  "Level 0": {
+    custom_code : {
+      launch: () => {
+        console.log('Hello World!')
       },
-      num_players: 4
-    }
+      next_turn: () => {},
+      win: () => {}
+    },
+    num_players: 4
   }
+}
 
 
 
