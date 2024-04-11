@@ -45,7 +45,7 @@ expTrail['B'] = expTrail['T'];
 expTrail['L'] = expTrail['R'];
 
 let FPS_origin = 24;
-let FPS = 60;
+let FPS = 40;
 let speedRectif = FPS / FPS_origin;
 
 let HIT_BOX = 5;
@@ -53,7 +53,7 @@ let HIT_BOX = 5;
 const effectAppearTime = 0.07;
 const effectExplosionTime = 0.7;
 
-const dropItemProbability = 1/2;
+const dropItemProbability = 1/4;
 const charRatio = 0.8;
 
 
@@ -80,9 +80,9 @@ class Player {
   constructor(x, y, width) {
     this.x = x;
     this.y = y;
-    this.speed = 20;
+    this.speed = 10;
     this.width = width;
-    this.height = this.width;
+    this.height = width;
     this.expRadius = 1;
     this.numBomb = 1;
     this.perforation = false;
