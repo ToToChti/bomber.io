@@ -18,14 +18,33 @@ let parties;
 let myPartyName = false;
 let levelSelected = 0;
 
+let CLOCK_RUN;
+
 
 
 function playBtn() {
+  let party = parties.find(party => party.owner == socket.id);
 
-  
+  if(party.players.length < 2) return Alert("Must be 2 players at least to start a game!");
 
+  socket.emit('launch_game', levelSelected);
 }
 
+socket.on('launchParty', (params) => {
+  parties = params.parties;
+
+  console.log(params)
+
+  if(params.party.name != myPartyName) return;
+
+  levelSelected = params.level;
+  LEVEL = levelSelected;
+
+  // Launch Party
+  CLOCK_RUN = initialize()
+
+  openWindow('gameWindow');
+})
 
 
 
@@ -41,10 +60,11 @@ leavePartyBtn.onclick = () => {
   myPartyName = undefined;
   displayPartyPage();
 }
+launchPartyBtn.onclick = playBtn;
 
 function chooseMap(id) {
-  document.querySelectorAll('.selectedMap').forEach(elem2 => {
-    elem2.classList.remove('selected');
+  document.querySelectorAll('.selectedMap').forEach(elem => {
+    elem.classList.remove('selected');
   })
   document.querySelector('#mapChoice' + id).classList.add('selected');
   levelSelected = id;
@@ -55,6 +75,7 @@ socket.on('update_players', (params) => {
   if(params.party.name == myPartyName) {
 
     launchPartyBtn.classList.add('hidden');
+    mapChoiceList.classList.add('hidden');
     
     parties.find(party => party.name == myPartyName).players = params.party.players;
     
@@ -75,7 +96,7 @@ socket.on('update_players', (params) => {
         string += '<img src="images/crown.png">';
         if(pl == socket.id) {
           launchPartyBtn.classList.remove('hidden');
-          launchPartyBtn.classList.remove('hidden');
+          mapChoiceList.classList.remove('hidden');
         }
       }
 
@@ -190,5 +211,3 @@ function randomString(len) {
 
   return string;
 }
-
-// openWindow('gameWindow');

@@ -401,18 +401,18 @@ function explode(x, y, index, radius, orient, perforation) {
 
     if(!player.alive) {
       charText.src = "../images/darkChar.png";
-      console.log("c'est NUL")
+      
       setTimeout(() => {
-        let gap=get_pos_spawn(player.id)
-        player.x=HIT_BOX+gap.x;
-        player.y=HIT_BOX+gap.y;
+        let gap = get_pos_spawn(player.id)
+        player.x = HIT_BOX + gap.x;
+        player.y = HIT_BOX + gap.y;
         charText.src = "../images/character_no_bg.png";
         player.alive=true;
       }, 3000);
       
     }
 
-    let itemOnCase = entityArray.find(entity => entity.col == x && entity.row == y);
+    let itemOnCase = entityArray.find(entity => entity.constructor.name == 'Extra' && entity.col == x && entity.row == y);
     if(itemOnCase) {
       entityArray.splice(entityArray.indexOf(itemOnCase), 1);
     }
@@ -422,9 +422,9 @@ function explode(x, y, index, radius, orient, perforation) {
 }
 
 
-function placeBomb(x, y) {
+function placeBomb(x, y, external) {
 
-  if(player.numBomb == 0) return;
+  if(player.numBomb == 0 && !external) return;
 
   let colRow = getColRow(x, y);
   let isBomb = false;
@@ -439,7 +439,6 @@ function placeBomb(x, y) {
 
   let block = getCase(x, y);
 
-
   if(MAP[block.row][block.col] != 1 || isBomb)
     return;
 
@@ -449,7 +448,9 @@ function placeBomb(x, y) {
   player.numBomb--;
   entityArray.push(new Bomb(block.col, block.row, player.width, player.expRadius, 3, player.perforation, false, true));
 
-  playSound("bombPlaced")
+  playSound("bombPlaced");
+
+  if(!external) socket.emit('placeBomb', {x: block.col, y: block.row});
 
   setTimeout(() => {
     if(entityArray[entityArray.length - 1] && !entityArray[entityArray.length - 1].exploded) {
@@ -572,6 +573,25 @@ function draw() {
 }
 
 
+function get_pos_spawn(id)
+{
+  let ratioX = canvas.width / MAP[0].length;
+  let ratioY = canvas.height / MAP.length;
+  for(let i of entityArray){
+ 
+    if(i.constructor.name == 'Spawn' && id==i.id) {
+
+      return {x: i.col*ratioX,y: i.row*ratioY};
+    }
+    else{
+
+      console.log("spawn not found");
+      return false;
+    }
+  }
+}
+
+
 function main() {
   keyHandle();
 
@@ -580,6 +600,8 @@ function main() {
 
 
 function resize() {
+
+  if(!MAP) return;
 
   let ratioMAP = MAP.length / MAP[0].length;
   let ratioSCR = document.querySelector(".bomberPlate").offsetHeight / document.querySelector(".bomberPlate").offsetWidth;
@@ -651,22 +673,9 @@ function initialize() {
 
 window.onresize = resize;
 
-let clockRun = initialize();
 
-function get_pos_spawn(id)
-{
-  let ratioX = canvas.width / MAP[0].length;
-  let ratioY = canvas.height / MAP.length;
-  for(let i of entityArray){
- 
-    if(i.constructor.name == 'Spawn' && id==i.id) {
+socket.on('placeBomb', (params) => {
+  if(params.partyName != myPartyName || emittor == socket.id) return;
 
-      return {x: i.col*ratioX,y: i.row*ratioY};
-    }
-    else{
-
-      console.log("spawn not found");
-      return false;
-    }
-  }
-}
+  placeBomb(params.x, params.y, true);
+})

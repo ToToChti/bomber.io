@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
         socket.id
       ],
       ingame: false,
-      game: false,
+      level: false,
       currentPlayers: []
     })
     
@@ -206,6 +206,25 @@ io.on('connection', (socket) => {
     party_leave(socket.id);
     
     io.emit('update_users', users)
+  })
+
+
+  socket.on('launch_game', level => {
+    var party = parties.find(party => party.players.includes(socket.id));
+
+    party.ingame = true;
+    party.level = level;
+
+    console.log(`[${getHMS()}]   ${party.name} launched level ${level}`);
+
+    io.emit('launchParty', {level, parties, party, emittor: socket.id});
+  })
+
+
+  socket.on('placeBomb', params => {
+    var party = parties.find(party => party.owner == socket.id);
+
+    io.emit('placeBomb', {x: params.x, y: params.y, partyName: party.name, emittor: socket.id});
   })
   
   
