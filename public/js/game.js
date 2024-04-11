@@ -26,6 +26,10 @@ perfoItem.src = "../images/Perfo Item.png";
 const expCenter = new Image();
 expCenter.src = "../images/explosion_center.png";
 
+const tp1Text=new Image();
+tp1Text.src = "../images/tp1.png";
+
+
 let expTrail = {};
 let expEnd = {};
 let ORIENT = ['L', 'R', 'B', 'T'];
@@ -45,7 +49,7 @@ expTrail['B'] = expTrail['T'];
 expTrail['L'] = expTrail['R'];
 
 let FPS_origin = 24;
-let FPS = 40;
+let FPS = 50;
 let speedRectif = FPS / FPS_origin;
 
 let HIT_BOX = 5;
@@ -61,7 +65,7 @@ const WALL = 0;
 const PATH = 1;
 const CRATE = 2;
 
-let LEVEL = 1;
+let LEVEL = 2;
 let MAP;
 
 let entityArray = [];
@@ -77,7 +81,8 @@ let lastBoardDim = {width: false, height: false};
 
 
 class Player {
-  constructor(x, y, width) {
+  constructor(id,x, y, width) {
+    this.id=id;
     this.x = x;
     this.y = y;
     this.speed = 10;
@@ -87,6 +92,7 @@ class Player {
     this.numBomb = 1;
     this.perforation = false;
     this.onBomb = false;
+    this.alive=true;
     this.lastBomb = {
       x: -1,
       y: -1
@@ -125,6 +131,16 @@ class Effect {
     this.row = row;
     this.orient = orient;
     this.opacity = 0;
+  }
+}
+
+class Spawn{
+  constructor(id,texture,col,row)
+  {
+    this.id=id;
+    this.texture=texture;
+    this.col = col;
+    this.row = row;
   }
 }
 
@@ -371,6 +387,31 @@ function explode(x, y, index, radius, orient, perforation) {
     // Draw explosion
     addExplosion(orient, index, radius, x, y);
 
+    let colRow = getColRow(player.x,player.y);
+
+    for(let col of colRow.col) {
+      for(let row of colRow.row) {
+
+        if(x == col && y == row) {
+          player.alive=false;
+          playSound("death")
+        }
+      }
+    }
+
+    if(!player.alive) {
+      charText.src = "../images/darkChar.png";
+      console.log("c'est NUL")
+      setTimeout(() => {
+        let gap=get_pos_spawn(player.id)
+        player.x=HIT_BOX+gap.x;
+        player.y=HIT_BOX+gap.y;
+        charText.src = "../images/character_no_bg.png";
+        player.alive=true;
+      }, 3000);
+      
+    }
+
     let itemOnCase = entityArray.find(entity => entity.col == x && entity.row == y);
     if(itemOnCase) {
       entityArray.splice(entityArray.indexOf(itemOnCase), 1);
@@ -419,6 +460,7 @@ function placeBomb(x, y) {
 
 
 function keyHandle() {
+  if(!player.alive) return;
   let order = [];
 
   let moveX = player.x;
@@ -514,6 +556,9 @@ function draw() {
     if(entity.constructor.name == "Extra") {
       ctx.drawImage(entity.texture, entity.col * ratioX, entity.row * ratioY, ratioX, ratioY);
     }
+    if(entity.constructor.name == "Spawn") {
+      ctx.drawImage(entity.texture, entity.col * ratioX, entity.row * ratioY, ratioX, ratioY);
+    }
   })
 
   effectArray.forEach(effect => {
@@ -581,10 +626,22 @@ function initialize() {
   entityArray = [];
   effectArray = [];
 
+  entityArray.push(new Spawn(1,tp1Text,1,1));
+  entityArray.push(new Spawn(2,tp1Text,MAP[0].length-2,1));
+  entityArray.push(new Spawn(3,tp1Text,1,MAP.length-2));
+  entityArray.push(new Spawn(4,tp1Text,MAP[0].length-2,MAP.length-2));
+
   resize();
 
-  player = new Player(canvas.width / MAP[0].length + HIT_BOX, canvas.height / MAP.length + HIT_BOX, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
+  let id_of_player=1;
+
+  let gap=get_pos_spawn(id_of_player)
+  //player = new Player(id_of_player,canvas.width / MAP[0].length + HIT_BOX+gap.x, canvas.height / MAP.length + HIT_BOX+gap.y, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
+  player = new Player(id_of_player,HIT_BOX+gap.x,HIT_BOX+gap.y, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
   
+
+  
+  //player = new Player(0,0,(canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
   resizeChar();
 
   draw();
@@ -595,3 +652,21 @@ function initialize() {
 window.onresize = resize;
 
 let clockRun = initialize();
+
+function get_pos_spawn(id)
+{
+  let ratioX = canvas.width / MAP[0].length;
+  let ratioY = canvas.height / MAP.length;
+  for(let i of entityArray){
+ 
+    if(i.constructor.name == 'Spawn' && id==i.id) {
+
+      return {x: i.col*ratioX,y: i.row*ratioY};
+    }
+    else{
+
+      console.log("spawn not found");
+      return false;
+    }
+  }
+}
