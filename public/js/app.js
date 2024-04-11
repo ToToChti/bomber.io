@@ -23,6 +23,10 @@ let numPlayers = 0;
 let CLOCK_RUN;
 
 
+function Alert(msg) {
+  alert(msg);
+}
+
 
 function playBtn() {
 
