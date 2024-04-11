@@ -124,6 +124,9 @@ io.on('connection', (socket) => {
   })
   
   console.log(`[${getHMS()}]   Connection : ${userName(socket.id)}`);
+
+  io.emit('update_party', parties);
+  io.emit('update_users', users);
   
   
   

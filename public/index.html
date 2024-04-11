@@ -19,7 +19,7 @@
       <div class="mainHome">
         <div class="leftBox">
           <img class="leftLogo" src="images/bomberLogoNoBG.png">
-          <div class="rules">
+          <div class="rules scrollBar">
             <div class="ruleContainer">
               <h1>Bomber.io</h1>
               <div class="rulesContent">
@@ -36,24 +36,41 @@
           </div>
         </div>
         <div class="rightBox">
-          <div class="rules">
-            <div class="ruleContainer">
-              <h1>Let's play!</h1>
-              <div class="rulesContent">
-                Choose whether you want to create a party, or join an already existing party!
+          <div class="partyPage">
+            <div class="rules">
+              <div class="ruleContainer">
+                <h1>Let's play!</h1>
+                <div class="rulesContent">
+                  Choose whether you want to create a party, or join an already existing party!
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="buttons">
             <button class="createPartyBtn">
               Create a party
             </button>
-            <button class="joinPartyBtn">
-              Join a party
+
+            <input placeholder="Pseudo..." class="pseudoInput">
+            
+            <div class="titleParty">Join a party</div>
+
+            <div class="partyList scrollBar"></div>
+          </div>
+
+          <div class="customPartyPage hidden">
+            <div class="titleParty">Room #mzdZ</div>
+
+            <div class="playerList"></div>
+
+            <div class="mapList"></div>
+
+            <button class="launchPartyBtn">
+              PLAY!
+            </button>
+            <button class="leavePartyBtn">
+              Leave party
             </button>
           </div>
-          <input placeholder="Pseudo..." class="pseudoInput">
         </div>
       </div>
     </div>    

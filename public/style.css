@@ -210,9 +210,11 @@ body {
   align-items: center;
   flex-direction: column;
 
-  overflow-y: scroll;
   color: beige;
+}
 
+.scrollBar {
+  overflow-y: scroll;
   scroll-snap-type: y mandatory;
 }
 
@@ -235,17 +237,10 @@ body {
   scroll-snap-align: center;
 }
 
-.rightBox .buttons {
-  width: 90%;
-  display: flex;
-
-  justify-content: space-between;
-
-  margin-top: 20px;
-}
 
 .rightBox button {
-  width: 48%;
+  margin-top: 20px;
+  width: 90%;
   box-shadow: 5px 5px 0 0 rgb(134, 134, 121);
   background-color: beige;
   font-family: "Pixelify Sans", sans-serif;
@@ -259,12 +254,11 @@ body {
 
   cursor: pointer;
 
-  transition: all .1s ease-in-out;
+  transition: all .2s ease-in-out;
 }
 
 .rightBox button:hover {
-  transform: translate(5px, 5px);
-  box-shadow: 0px 0px 0px 0px rgb(134, 134, 121);
+  transform: scale(1.03, 1.03);
 }
 
 .pseudoInput {
@@ -276,5 +270,120 @@ body {
   border: 2px solid brown;
   box-sizing: border-box;
 
+  font-family: "Pixelify Sans", sans-serif;
+
+  padding: 5px 10px;
+  box-sizing: border-box;
+
   margin-top: 20px;
+}
+
+.partyList, .playerList {
+
+  display: flex;
+
+  flex-direction: column;
+
+  margin-top: 10px;
+
+  width: 90%;
+
+  color: beige;
+  font-size: 23px;
+}
+
+
+.party {
+
+  cursor: pointer;
+
+  display: flex;
+
+  justify-content: space-between;
+
+  padding: 5px 0px;
+
+  border-bottom: 2px solid beige;
+}
+
+.partyName {
+    
+  font-size: 22px;
+    
+  color: beige;
+    
+  font-weight: 100;
+
+  transition: all .2s ease-in-out;
+  
+  display: flex;
+  align-items: center;
+}
+
+.party:hover .partyName {
+  font-size: 23px;
+}
+
+.rightBox .titleParty {
+  font-size: 40px;
+  margin-top: 20px;
+
+  color: beige;
+}
+
+.partyPage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: hidden;
+
+  padding: 0px 10px;
+  box-sizing: border-box;
+
+  scroll-snap-type: y;
+}
+
+.partyPage.hidden {
+  display: none;
+}
+
+.customPartyPage {
+
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.customPartyPage.hidden {
+  display: none;
+}
+
+.partyName img {
+  width: 30px;
+  filter: invert(1) contrast(0.8);
+  margin-left: 10px;
+}
+
+.hidden {
+  display: none!important;
+}
+
+.mapList {
+  width: 90%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.mapList .selectedMap {
+  width: 46%;
+  font-size: 25px;
+  font-weight: 300;
+}
+
+.mapList .selectedMap.selected {
+  background-color: brown;
+  color: beige;
 }
