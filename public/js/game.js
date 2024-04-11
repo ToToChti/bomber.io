@@ -87,6 +87,7 @@ class Player {
     this.numBomb = 1;
     this.perforation = false;
     this.onBomb = false;
+    this.alive=true;
     this.lastBomb = {
       x: -1,
       y: -1
@@ -370,6 +371,14 @@ function explode(x, y, index, radius, orient, perforation) {
   else if(blockType == 'Path') {
     // Draw explosion
     addExplosion(orient, index, radius, x, y);
+    let positions=getColRow(player.x,player.y);
+    for(let i=0;i<positions[0].length;++i)
+    {
+      if((x==positions[0][i])&&(y==positions[1][i]))
+      {
+        player.alive=false;
+      }
+    }
 
     let itemOnCase = entityArray.find(entity => entity.col == x && entity.row == y);
     if(itemOnCase) {
