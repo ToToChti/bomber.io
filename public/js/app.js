@@ -17,31 +17,39 @@ let pseudo;
 let parties;
 let myPartyName = false;
 let levelSelected = 0;
+let gamePlayerId;
+let numPlayers = 0;
 
 let CLOCK_RUN;
 
 
 
 function playBtn() {
-  let party = parties.find(party => party.owner == socket.id);
+
+  let party = parties.find(party => party.name == myPartyName);
+  
+  if(!party || party.inGame) return;
 
   if(party.players.length < 2) return Alert("Must be 2 players at least to start a game!");
-
+  
   socket.emit('launch_game', levelSelected);
 }
 
 socket.on('launchParty', (params) => {
   parties = params.parties;
 
-  console.log(params)
+  console.log("Game Launched...")
 
   if(params.party.name != myPartyName) return;
 
+  gamePlayerId = params.party.players.indexOf(socket.id) + 1;
+
   levelSelected = params.level;
   LEVEL = levelSelected;
+  numPlayers = params.party.players.length;
 
   // Launch Party
-  CLOCK_RUN = initialize()
+  CLOCK_RUN = initialize(params.party.players.length)
 
   openWindow('gameWindow');
 })

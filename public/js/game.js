@@ -29,6 +29,9 @@ expCenter.src = "../images/explosion_center.png";
 const tp1Text=new Image();
 tp1Text.src = "../images/tp1.png";
 
+const darkCharText = new Image();
+darkCharText.src = "../images/darkChar.png";
+
 
 let expTrail = {};
 let expEnd = {};
@@ -70,6 +73,7 @@ let MAP;
 
 let entityArray = [];
 let effectArray = [];
+let playerArray = [];
 
 let numToBlock = {
   0: 'Block',
@@ -92,7 +96,7 @@ class Player {
     this.numBomb = 1;
     this.perforation = false;
     this.onBomb = false;
-    this.alive=true;
+    this.alive = true;
     this.lastBomb = {
       x: -1,
       y: -1
@@ -137,7 +141,7 @@ class Effect {
 class Spawn{
   constructor(id,texture,col,row)
   {
-    this.id=id;
+    this.id = id;
     this.texture=texture;
     this.col = col;
     this.row = row;
@@ -167,8 +171,8 @@ document.addEventListener('keyup', (event) => {
 
 function getColRow(posX, posY) {
 
-  posX = posX || player.x;
-  posY = posY || player.y;
+  posX = posX || playerArray[gamePlayerId - 1].x;
+  posY = posY || playerArray[gamePlayerId - 1].y;
 
   let col = [];
   let row = [];
@@ -176,8 +180,8 @@ function getColRow(posX, posY) {
   let ratioX = canvas.width / MAP[0].length;
   let ratioY = canvas.height / MAP.length;
 
-  row.push(Math.floor(posY / ratioY), Math.floor((posY + player.height) / ratioY));
-  col.push(Math.floor(posX / ratioX), Math.floor((posX + player.width) / ratioX));
+  row.push(Math.floor(posY / ratioY), Math.floor((posY + playerArray[gamePlayerId - 1].height) / ratioY));
+  col.push(Math.floor(posX / ratioX), Math.floor((posX + playerArray[gamePlayerId - 1].width) / ratioX));
 
   return {col, row}
 
@@ -185,8 +189,8 @@ function getColRow(posX, posY) {
 
 function getCase(posX, posY) {
   
-  posX = posX || player.x;
-  posY = posY || player.y;
+  posX = posX || playerArray[gamePlayerId - 1].x;
+  posY = posY || playerArray[gamePlayerId - 1].y;
 
   let col = -1;
   let row = -1;
@@ -194,8 +198,8 @@ function getCase(posX, posY) {
   let ratioX = canvas.width / MAP[0].length;
   let ratioY = canvas.height / MAP.length;
 
-  row = Math.floor((posY + posY + player.height) / 2 / ratioY);
-  col = Math.floor((posX + posX + player.width) / 2 / ratioX);
+  row = Math.floor((posY + posY + playerArray[gamePlayerId - 1].height) / 2 / ratioY);
+  col = Math.floor((posX + posX + playerArray[gamePlayerId - 1].width) / 2 / ratioX);
 
   return {col, row}
 }
@@ -205,6 +209,7 @@ function pickItems(x, y) {
   let colRow = getColRow(x, y);
 
   let itemFound = false;
+  let COL, ROW;
 
   for(let col of colRow.col) {
     for(let row of colRow.row) {
@@ -212,6 +217,8 @@ function pickItems(x, y) {
       let item = entityArray.find(entity => entity.row == row && entity.col == col && entity.constructor.name == 'Extra');
       if(item) {
         itemFound = item;
+        COL = col;
+        ROW = row;
       }
     }
   }
@@ -220,26 +227,22 @@ function pickItems(x, y) {
     playSound("pickItem");
 
     if(itemFound.id == "1bomb") {
-      player.numBomb++;
-      entityArray.splice(entityArray.indexOf(itemFound), 1);
+      playerArray[gamePlayerId - 1].numBomb++;
     }
     if(itemFound.id == "1radius") {
-      player.expRadius++;
-      entityArray.splice(entityArray.indexOf(itemFound), 1);
+      playerArray[gamePlayerId - 1].expRadius++;
     }
     if(itemFound.id == "perfo") {
-      player.perforation = true;
-      entityArray.splice(entityArray.indexOf(itemFound), 1);
+      playerArray[gamePlayerId - 1].perforation = true;
     }
+
+    socket.emit('removeItem', {x: COL, y: ROW});
   }
 }
 
 
 
 function collision(moveX, moveY) {
-
-  let ratioX = canvas.width / MAP[0].length;
-  let ratioY = canvas.height / MAP.length;
 
   let notMove = false;
 
@@ -250,7 +253,7 @@ function collision(moveX, moveY) {
   for(let col of colRow.col) {
     for(let row of colRow.row) {
 
-      if(col == player.lastBomb.x && row == player.lastBomb.y) {
+      if(col == playerArray[gamePlayerId - 1].lastBomb.x && row == playerArray[gamePlayerId - 1].lastBomb.y) {
         findOwnBomb = true;
       }
 
@@ -258,15 +261,15 @@ function collision(moveX, moveY) {
         notMove = true;
       }
 
-      if(entityArray.find(entity => entity.row == row && entity.col == col && entity.constructor.name == 'Bomb') && (player.lastBomb.x != col || player.lastBomb.y != row)) {
+      if(entityArray.find(entity => entity.row == row && entity.col == col && entity.constructor.name == 'Bomb') && (playerArray[gamePlayerId - 1].lastBomb.x != col || playerArray[gamePlayerId - 1].lastBomb.y != row)) {
         notMove = true;
       }
     }
   }
 
   if(!findOwnBomb) {
-    player.lastBomb.x = -1;
-    player.lastBomb.y = -1;
+    playerArray[gamePlayerId - 1].lastBomb.x = -1;
+    playerArray[gamePlayerId - 1].lastBomb.y = -1;
   }
 
   return notMove;
@@ -351,7 +354,8 @@ function explode(x, y, index, radius, orient, perforation) {
     // 1 chance of 2 to get a bonus
     if(Math.round(Math.random() * 100) % (1 / dropItemProbability) == 0) {
       let bonus = extraList[Math.floor(Math.random() * extraList.length)]
-      entityArray.push(new Extra(bonus.name, bonus.texture, bonus.id, x, y));
+
+      socket.emit('placeItem', {bonusID: bonus.id, x, y});
     }
 
     // Generate explosion effect
@@ -361,11 +365,16 @@ function explode(x, y, index, radius, orient, perforation) {
 
   else if(blockType == 'Bomb') {
 
-    if(bomb.own) player.numBomb++;
+    if(bomb.own) playerArray[gamePlayerId - 1].numBomb++;
     
     // Remove bomb from entity array & render explosion
     entityArray.splice(entityArray.indexOf(bomb), 1); 
     addExplosion(orient, 0, radius, x, y);
+
+    let block = getCase(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y);
+    if(bomb.col == block.col && bomb.row == block.row) {
+      death(gamePlayerId);
+    }
 
     // Propagate explosion to cross shaped explosion
     for(let i = 1; i <= radius; ++i) {
@@ -387,30 +396,19 @@ function explode(x, y, index, radius, orient, perforation) {
     // Draw explosion
     addExplosion(orient, index, radius, x, y);
 
-    let colRow = getColRow(player.x,player.y);
+    let colRow = getColRow(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y);
 
+    let willDie = false;
     for(let col of colRow.col) {
       for(let row of colRow.row) {
 
         if(x == col && y == row) {
-          player.alive=false;
-          playSound("death")
+          willDie = true;
         }
       }
     }
 
-    if(!player.alive) {
-      charText.src = "../images/darkChar.png";
-      
-      setTimeout(() => {
-        let gap = get_pos_spawn(player.id)
-        player.x = HIT_BOX + gap.x;
-        player.y = HIT_BOX + gap.y;
-        charText.src = "../images/character_no_bg.png";
-        player.alive=true;
-      }, 3000);
-      
-    }
+    if(willDie) death(gamePlayerId);
 
     let itemOnCase = entityArray.find(entity => entity.constructor.name == 'Extra' && entity.col == x && entity.row == y);
     if(itemOnCase) {
@@ -422,35 +420,48 @@ function explode(x, y, index, radius, orient, perforation) {
 }
 
 
-function placeBomb(x, y, external) {
+function placeBomb(x, y, radius, perforation, external) {
 
-  if(player.numBomb == 0 && !external) return;
+  let ratioX = canvas.width / MAP[0].length;
+  let ratioY = canvas.height / MAP.length;
+
+  if(playerArray[gamePlayerId - 1].numBomb == 0 && !external) return;
 
   let colRow = getColRow(x, y);
   let isBomb = false;
 
-  for(row of colRow.row) {
-    for(col of colRow.col) {
-      if(entityArray.find(entity => entity.col == col && entity.row == row && entity.constructor.name == "Bomb")) {
-        isBomb = true;
+  if(!external) {
+    for(row of colRow.row) {
+      for(col of colRow.col) {
+        if(entityArray.find(entity => entity.col == col && entity.row == row && entity.constructor.name == "Bomb")) {
+          isBomb = true;
+        }
       }
     }
   }
 
   let block = getCase(x, y);
 
+  if(external) {
+    block.col = x;
+    block.row = y;
+  }
+
   if(MAP[block.row][block.col] != 1 || isBomb)
     return;
 
-  player.lastBomb.x = block.col;
-  player.lastBomb.y = block.row;
 
-  player.numBomb--;
-  entityArray.push(new Bomb(block.col, block.row, player.width, player.expRadius, 3, player.perforation, false, true));
+  playerArray[gamePlayerId - 1].lastBomb.x = block.col;
+  playerArray[gamePlayerId - 1].lastBomb.y = block.row;
+
+  if(!external) playerArray[gamePlayerId - 1].numBomb--;
+  entityArray.push(new Bomb(block.col, block.row, playerArray[gamePlayerId - 1].width, radius, 3, perforation, false, !external));
 
   playSound("bombPlaced");
 
-  if(!external) socket.emit('placeBomb', {x: block.col, y: block.row});
+  if(!external) {
+    socket.emit('placeBomb', {x: block.col, y: block.row, ratioX, radius, perforation});
+  }
 
   setTimeout(() => {
     if(entityArray[entityArray.length - 1] && !entityArray[entityArray.length - 1].exploded) {
@@ -461,11 +472,13 @@ function placeBomb(x, y, external) {
 
 
 function keyHandle() {
-  if(!player.alive) return;
+  if(!playerArray[gamePlayerId - 1].alive) return;
+
+  let ratioX = canvas.width / MAP[0].length;
   let order = [];
 
-  let moveX = player.x;
-  let moveY = player.y;
+  let moveX = playerArray[gamePlayerId - 1].x;
+  let moveY = playerArray[gamePlayerId - 1].y;
 
   if(keyCollector['z'] || keyCollector['ArrowUp']) order.push('up');
   if(keyCollector['q'] || keyCollector['ArrowLeft']) order.push('left');
@@ -474,7 +487,7 @@ function keyHandle() {
 
   if(keyCollector[' '] && spacePress == false) { 
     spacePress = true;
-    placeBomb(player.x, player.y);
+    placeBomb(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y, playerArray[gamePlayerId - 1].expRadius, playerArray[gamePlayerId - 1].perforation);
   }
 
   else if(!keyCollector[' ']) {
@@ -482,47 +495,79 @@ function keyHandle() {
   }
 
   if(order.length != 2) {
-    if(order[0] == 'up') moveY -= player.speed / speedRectif;
-    if(order[0] == 'down') moveY += player.speed / speedRectif;
-    if(order[0] == 'left') moveX -= player.speed / speedRectif;
-    if(order[0] == 'right') moveX += player.speed / speedRectif;
+    if(order[0] == 'up') moveY -= playerArray[gamePlayerId - 1].speed / speedRectif;
+    if(order[0] == 'down') moveY += playerArray[gamePlayerId - 1].speed / speedRectif;
+    if(order[0] == 'left') moveX -= playerArray[gamePlayerId - 1].speed / speedRectif;
+    if(order[0] == 'right') moveX += playerArray[gamePlayerId - 1].speed / speedRectif;
   }
 
   else if(order.length == 2) {
     if(order.includes('up') && order.includes('right')) {
-      moveX += player.speed / Math.sqrt(2) / speedRectif;
-      moveY -= player.speed / Math.sqrt(2) / speedRectif;
+      moveX += playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
+      moveY -= playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
     }
     if(order.includes('down') && order.includes('right')) {
-      moveX += player.speed / Math.sqrt(2) / speedRectif;
-      moveY += player.speed / Math.sqrt(2) / speedRectif;
+      moveX += playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
+      moveY += playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
     }
     if(order.includes('up') && order.includes('left')) {
-      moveX -= player.speed / Math.sqrt(2) / speedRectif;
-      moveY -= player.speed / Math.sqrt(2) / speedRectif;
+      moveX -= playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
+      moveY -= playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
     }
     if(order.includes('down') && order.includes('left')) {
-      moveX -= player.speed / Math.sqrt(2) / speedRectif;
-      moveY += player.speed / Math.sqrt(2) / speedRectif;
+      moveX -= playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
+      moveY += playerArray[gamePlayerId - 1].speed / Math.sqrt(2) / speedRectif;
     }
   }
 
   let blocked = collision(moveX, moveY);
   
-  if(!blocked) {
-    player.x = moveX;
-    player.y = moveY;
+  if(!blocked && !(playerArray[gamePlayerId - 1].x == moveX && playerArray[gamePlayerId - 1].y == moveY)) {
+    playerArray[gamePlayerId - 1].x = moveX;
+    playerArray[gamePlayerId - 1].y = moveY;
+
+    socket.emit('playerMove', {x: moveX, y: moveY, playerID: gamePlayerId, ratio: ratioX});
   }
 
-  pickItems(player.x, player.y);
+  pickItems(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y);
+}
+
+function death(plID, self) {
+
+  let ratioX = canvas.width / MAP[0].length;
+
+  playerArray[plID - 1].alive = false;
+
+  playSound('death');
+
+  setTimeout(() => {
+    let gap = getPosSpawn(playerArray[plID - 1].id);
+
+    playerArray[plID - 1].x = HIT_BOX + gap.x;
+    playerArray[plID - 1].y = HIT_BOX + gap.y;
+
+    playerArray[plID - 1].alive = true;
+
+    socket.emit('playerMove', {x: playerArray[plID - 1].x, y: playerArray[plID - 1].y, playerID: plID, ratio: ratioX});
+  }, 3000);
+
+  if(!self) socket.emit('playerDeath', plID);
 }
 
 function drawPlayer() {
 
-  charText.width = player.width;
-  charText.height = player.height;
+  for(let i = 0; i < numPlayers; ++i) {
+    charText.width  = playerArray[i].width;
+    charText.height = playerArray[i].height;
 
-  ctx.drawImage(charText, player.x, player.y, player.width, player.height);
+    ctx.drawImage(
+      (playerArray[i].alive ? charText : darkCharText),
+      playerArray[i].x,
+      playerArray[i].y, 
+      playerArray[i].width, 
+      playerArray[i].height
+    );
+  }
 }
 
 function draw() {
@@ -573,22 +618,19 @@ function draw() {
 }
 
 
-function get_pos_spawn(id)
+function getPosSpawn(id)
 {
   let ratioX = canvas.width / MAP[0].length;
   let ratioY = canvas.height / MAP.length;
-  for(let i of entityArray){
- 
-    if(i.constructor.name == 'Spawn' && id==i.id) {
 
-      return {x: i.col*ratioX,y: i.row*ratioY};
-    }
-    else{
-
-      console.log("spawn not found");
-      return false;
+  for(let i of entityArray) {
+    if(i.constructor.name == 'Spawn' && id == i.id) {
+      return {x: i.col*ratioX, y: i.row*ratioY};
     }
   }
+
+  console.log("ERROR: Spawn not found x(");
+  return false;
 }
 
 
@@ -616,7 +658,7 @@ function resize() {
     canvas.width = document.querySelector(".bomberPlate").offsetWidth;
   }
 
-  if(player) resizeChar();
+  if(playerArray[gamePlayerId - 1]) resizeChar();
 
   lastBoardDim.width = canvas.width;
   lastBoardDim.height = canvas.height;
@@ -628,20 +670,21 @@ function resize() {
 // Resize character
 function resizeChar() {
 
-  if(lastBoardDim.width && lastBoardDim.height) {
-    player.x = player.x * canvas.width / lastBoardDim.width;
-    player.y = player.y * canvas.height / lastBoardDim.height;
+  for(let i = 0; i < numPlayers; ++i) {
+    if(lastBoardDim.width && lastBoardDim.height) {
+      playerArray[i].x = playerArray[i].x * canvas.width / lastBoardDim.width;
+      playerArray[i].y = playerArray[i].y * canvas.height / lastBoardDim.height;
 
-    player.speed = player.speed * canvas.width / lastBoardDim.width;
+      playerArray[i].speed = playerArray[i].speed * canvas.width / lastBoardDim.width;
+    }
+
+    playerArray[i].height = (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2;
+    playerArray[i].width  = (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2;
   }
-
-  player.height = (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2;
-  player.width  = (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2;
-
   return;
 }
 
-function initialize() {
+function initialize(plCount) {
 
   MAP = levels[LEVEL].slice();
 
@@ -655,15 +698,11 @@ function initialize() {
 
   resize();
 
-  let id_of_player=1;
-
-  let gap=get_pos_spawn(id_of_player)
-  //player = new Player(id_of_player,canvas.width / MAP[0].length + HIT_BOX+gap.x, canvas.height / MAP.length + HIT_BOX+gap.y, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
-  player = new Player(id_of_player,HIT_BOX+gap.x,HIT_BOX+gap.y, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
+  for(let i = 0; i < plCount; ++i) {
+    let gap = getPosSpawn(i + 1)
+    playerArray.push(new Player(i + 1,HIT_BOX+gap.x,HIT_BOX+gap.y, (canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2));
+  }
   
-
-  
-  //player = new Player(0,0,(canvas.width / MAP[0].length)*charRatio - HIT_BOX * 2);
   resizeChar();
 
   draw();
@@ -675,7 +714,40 @@ window.onresize = resize;
 
 
 socket.on('placeBomb', (params) => {
-  if(params.partyName != myPartyName || emittor == socket.id) return;
+  if(params.partyName != myPartyName || params.emittor == socket.id) return;
 
-  placeBomb(params.x, params.y, true);
+  placeBomb(params.x, params.y, params.radius, params.perforation, true);
+})
+
+socket.on('playerMove', (params) => {
+  let ratio = canvas.width / MAP[0].length;
+
+  if(params.partyName != myPartyName || params.playerID == gamePlayerId) return;
+
+  playerArray[params.playerID - 1].x = params.x * ratio / params.ratio;
+  playerArray[params.playerID - 1].y = params.y * ratio / params.ratio;
+})
+
+socket.on('playerDeath', params => {
+  if(params.partyName != myPartyName || params.playerID == gamePlayerId) return;
+
+  death(params.playerID, true);
+})
+
+socket.on('placeItem', params => {
+  if(params.partyName != myPartyName) return;
+
+  let bonus = extraList.find(extra => extra.id == params.bonusID);
+
+  entityArray.push(new Extra(bonus.name, bonus.texture, bonus.id, params.x, params.y));
+})
+
+socket.on('removeItem', params => {
+  if(params.partyName != myPartyName) return;
+
+  let extra = entityArray.find(entity => entity.constructor.name == 'Extra' && entity.col == params.x && entity.row == params.y);
+
+  if(!extra) return console.log("Aie");
+  
+  entityArray.splice(entityArray.indexOf(extra), 1);
 })

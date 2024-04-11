@@ -222,12 +222,44 @@ io.on('connection', (socket) => {
 
 
   socket.on('placeBomb', params => {
-    var party = parties.find(party => party.owner == socket.id);
+    var party = parties.find(party => party.players.includes(socket.id));
 
-    io.emit('placeBomb', {x: params.x, y: params.y, partyName: party.name, emittor: socket.id});
+    if(!party) return;
+
+    io.emit('placeBomb', {x: params.x, y: params.y, partyName: party.name, emittor: socket.id, radius: params.radius, perforation: params.perforation});
   })
   
   
+  socket.on('playerMove', params => {
+    var party = parties.find(party => party.players.includes(socket.id));
+
+    if(!party) return;
+
+    io.emit('playerMove', {x: params.x, y: params.y, partyName: party.name, playerID: params.playerID, ratio: params.ratio});
+  })
+
+  socket.on('playerDeath', plID => {
+    var party = parties.find(party => party.players.includes(socket.id));
+
+    if(!party) return;
+
+    io.emit('playerDeath', {partyName: party.name, playerID: plID});
+  })
+
+  socket.on('placeItem', params => {
+    var party = parties.find(party => party.players.includes(socket.id));
+
+    if(!party) return;
+
+    io.emit('placeItem', {partyName: party.name, bonusID: params.bonusID, x: params.x, y: params.y});
+  })
+
+  socket.on('removeItem', params => {
+    var party = parties.find(party => party.players.includes(socket.id));
+    if(!party) return;
+
+    io.emit('removeItem', {partyName: party.name, x: params.x, y: params.y});
+  })
   
 
   
