@@ -45,7 +45,7 @@ expTrail['B'] = expTrail['T'];
 expTrail['L'] = expTrail['R'];
 
 let FPS_origin = 24;
-let FPS = 40;
+let FPS = 70;
 let speedRectif = FPS / FPS_origin;
 
 let HIT_BOX = 5;
