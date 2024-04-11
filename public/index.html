@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="shortcut icon" href="images/bomberLogoNoBG.png" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <title>Bomber.io</title>
+</head>
+<body>
+
+  <container class="homeWindow window">
+    <div class="box">
+      <img class="homeLogo" src="images/BomberIO_Logo.png">
+      <div class="mainHome">
+        <div class="leftBox">
+          <img class="leftLogo" src="images/bomberLogoNoBG.png">
+          <div class="rules">
+            <div class="ruleContainer">
+              <h1>Bomber.io</h1>
+              <div class="rulesContent">
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aperiam voluptatibus quidem officiis! Consectetur ipsum quibusdam officia est, accusantium molestiae at quod sint. Totam cumque molestias voluptatem neque quisquam voluptas dolor magnam, unde iure eligendi dolorum in quasi itaque laboriosam odit!
+              </div>
+            </div>
+
+            <div class="ruleContainer">
+              <h1>How to play?</h1>
+              <div class="rulesContent">
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Aperiam voluptatibus quidem officiis! Consectetur ipsum quibusdam officia est, accusantium molestiae at quod sint. Totam cumque molestias voluptatem neque quisquam voluptas dolor magnam, unde iure eligendi dolorum in quasi itaque laboriosam odit!
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rightBox">
+          <div class="rules">
+            <div class="ruleContainer">
+              <h1>Let's play!</h1>
+              <div class="rulesContent">
+                Choose whether you want to create a party, or join an already existing party!
+              </div>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button class="createPartyBtn">
+              Create a party
+            </button>
+            <button class="joinPartyBtn">
+              Join a party
+            </button>
+          </div>
+          <input placeholder="Pseudo..." class="pseudoInput">
+        </div>
+      </div>
+    </div>    
+  </container>
+
+  <container class="gameWindow window closed">
+    <div class="titleBox">
+      <img id="bomberLogoInGame" src="images/BomberIO_Logo.png">
+    </div>
+    <div class="bomberPlate">
+      <div>
+        <canvas id="bomberGame"></canvas>
+      </div>
+    </div>
+    
+  </container>
+
+  <div class="musicOnOff noMusic"></div>
+
+
+  <audio id="bgMusic" autoplay></audio>
+
+  <audio id="channelSound1"></audio>
+  <audio id="channelSound2"></audio>
+  <audio id="channelSound3"></audio>
+  <audio id="channelSound4"></audio>
+  <audio id="channelSound5"></audio>
+
+  <script src="js/music.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
