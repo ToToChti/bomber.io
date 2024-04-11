@@ -8,6 +8,7 @@ let sounds = {
   explosion: "./music/explosion.mp3",
   pickItem: "./music/bonusPick.mp3",
   bombPlaced: "./music/bombDrop.mp3",
+  death: "./music/death.mp3"
 }
 
 let musicCount = Math.floor(Math.random() * playlist.length);
