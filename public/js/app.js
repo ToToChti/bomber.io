@@ -44,7 +44,7 @@ socket.on('launchParty', (params) => {
 
   console.log("Game Launched...")
 
-  if(params.party.name != myPartyName) return;
+  if(params.party.name != myPartyName || params.party.inGame) return;
 
   gamePlayerId = params.party.players.indexOf(socket.id) + 1;
 
