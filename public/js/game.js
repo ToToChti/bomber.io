@@ -94,6 +94,8 @@ class Player {
     this.height = width;
     this.expRadius = 1;
     this.numBomb = 1;
+    this.lives = 1;
+    this.finalDead = false;
     this.perforation = false;
     this.onBomb = false;
     this.alive = true;
@@ -372,8 +374,9 @@ function explode(x, y, index, radius, orient, perforation) {
     addExplosion(orient, 0, radius, x, y);
 
     let block = getCase(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y);
+    
     if(bomb.col == block.col && bomb.row == block.row) {
-      death(gamePlayerId);
+      socket.emit('playerDeath', gamePlayerId);
     }
 
     // Propagate explosion to cross shaped explosion
@@ -408,7 +411,7 @@ function explode(x, y, index, radius, orient, perforation) {
       }
     }
 
-    if(willDie) death(gamePlayerId);
+    if(willDie) socket.emit('playerDeath', gamePlayerId);
 
     let itemOnCase = entityArray.find(entity => entity.constructor.name == 'Extra' && entity.col == x && entity.row == y);
     if(itemOnCase) {
@@ -472,7 +475,7 @@ function placeBomb(x, y, radius, perforation, external) {
 
 
 function keyHandle() {
-  if(!playerArray[gamePlayerId - 1].alive) return;
+  if(!playerArray[gamePlayerId - 1].alive || playerArray[gamePlayerId - 1].finalDead) return;
 
   let ratioX = canvas.width / MAP[0].length;
   let order = [];
@@ -532,7 +535,7 @@ function keyHandle() {
   pickItems(playerArray[gamePlayerId - 1].x, playerArray[gamePlayerId - 1].y);
 }
 
-function death(plID, self) {
+function death(plID) {
 
   let ratioX = canvas.width / MAP[0].length;
 
@@ -551,22 +554,31 @@ function death(plID, self) {
     socket.emit('playerMove', {x: playerArray[plID - 1].x, y: playerArray[plID - 1].y, playerID: plID, ratio: ratioX});
   }, 3000);
 
-  if(!self) socket.emit('playerDeath', plID);
+  if(--playerArray[plID - 1].lives <= 0) {
+    playerArray[plID - 1].finalDead = true;
+
+    if(playerArray.filter(play => !play.finalDead).length <= 1) {
+      endGame(playerArray.filter(play => !play.finalDead)[0].id);
+    }
+  }
 }
 
 function drawPlayer() {
 
   for(let i = 0; i < numPlayers; ++i) {
-    charText.width  = playerArray[i].width;
-    charText.height = playerArray[i].height;
+    
+    if(!playerArray[i].finalDead) {
+      charText.width  = playerArray[i].width;
+      charText.height = playerArray[i].height;
 
-    ctx.drawImage(
-      (playerArray[i].alive ? charText : darkCharText),
-      playerArray[i].x,
-      playerArray[i].y, 
-      playerArray[i].width, 
-      playerArray[i].height
-    );
+      ctx.drawImage(
+        (playerArray[i].alive ? charText : darkCharText),
+        playerArray[i].x,
+        playerArray[i].y, 
+        playerArray[i].width, 
+        playerArray[i].height
+      );
+    }
   }
 }
 
@@ -687,6 +699,7 @@ function resizeChar() {
 function initialize(plCount) {
 
   MAP = levels[LEVEL].slice();
+  playerArray = [];
 
   entityArray = [];
   effectArray = [];
@@ -729,9 +742,9 @@ socket.on('playerMove', (params) => {
 })
 
 socket.on('playerDeath', params => {
-  if(params.partyName != myPartyName || params.playerID == gamePlayerId) return;
+  if(params.partyName != myPartyName) return;
 
-  death(params.playerID, true);
+  death(params.playerID);
 })
 
 socket.on('placeItem', params => {
@@ -750,4 +763,12 @@ socket.on('removeItem', params => {
   if(!extra) return console.log("Aie");
   
   entityArray.splice(entityArray.indexOf(extra), 1);
+})
+
+
+socket.on('gameFinished', params => {
+
+  if(params.partyName != myPartyName) return;
+
+  endGame(params.winner);
 })

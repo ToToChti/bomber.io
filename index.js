@@ -260,6 +260,20 @@ io.on('connection', (socket) => {
 
     io.emit('removeItem', {partyName: party.name, x: params.x, y: params.y});
   })
+
+  socket.on('gameFinished', () => {
+    var party = parties.find(party => party.players.includes(socket.id));
+    if(!party) return;
+
+    io.emit('gameFinished', {partyName: party.name, winner: params.winner});
+  })
+
+  socket.on('closeEndWindow', () => {
+    var party = parties.find(party => party.players.includes(socket.id));
+    if(!party) return;
+
+    io.emit('closeEndWindow', {partyName: party.name});
+  })
   
 
   

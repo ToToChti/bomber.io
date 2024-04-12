@@ -11,6 +11,10 @@ let partyNameDisplay = customPartyPage.querySelector(".titleParty");
 let leavePartyBtn = customPartyPage.querySelector(".leavePartyBtn");
 let launchPartyBtn = customPartyPage.querySelector(".launchPartyBtn");
 let mapChoiceList = customPartyPage.querySelector(".mapList");
+let endScreen = document.querySelector('.endScreen');
+let restartGameBtn = document.querySelector('.restartGameBtn');
+let leaveGamePartyBtn = document.querySelector('.leaveGamePartyBtn');
+let leaveGameBtn = document.querySelector('.leaveGameBtn');
 
 
 let pseudo;
@@ -30,6 +34,8 @@ function Alert(msg) {
 
 function playBtn() {
 
+  console.log("Play Button Pressed")
+
   let party = parties.find(party => party.name == myPartyName);
   
   if(!party || party.inGame) return;
@@ -40,9 +46,9 @@ function playBtn() {
 }
 
 socket.on('launchParty', (params) => {
-  parties = params.parties;
+  endScreen.classList.remove('opened');
 
-  console.log("Game Launched...")
+  parties = params.parties;
 
   if(params.party.name != myPartyName || params.party.inGame) return;
 
@@ -53,8 +59,9 @@ socket.on('launchParty', (params) => {
   numPlayers = params.party.players.length;
 
   // Launch Party
-  CLOCK_RUN = initialize(params.party.players.length)
+  CLOCK_RUN = initialize(numPlayers);
 
+  console.log("Game launched...");
   openWindow('gameWindow');
 })
 
@@ -63,7 +70,7 @@ socket.on('launchParty', (params) => {
 
 
 for(let i = 0; i < levels.length; ++i) {
-  mapChoiceList.innerHTML += `<button class="selectedMap ${i == levelSelected ? "selected": ""}" onclick="chooseMap(${i})" id="mapChoice${i}">Level ${i}</button>`;
+  mapChoiceList.innerHTML += `<button class="btn selectedMap ${i == levelSelected ? "selected": ""}" onclick="chooseMap(${i})" id="mapChoice${i}">Level ${i}</button>`;
 }
 
 createPartyBtn.onclick = createParty;
@@ -73,6 +80,24 @@ leavePartyBtn.onclick = () => {
   displayPartyPage();
 }
 launchPartyBtn.onclick = playBtn;
+
+document.querySelector('.restartGameBtn').onclick = (e) => {
+  let party = parties.find(party => party.name == myPartyName);
+  
+  if(!party || party.inGame) return;
+
+  if(party.players.length < 2) return Alert("Must be 2 players at least to start a game!");
+  
+  socket.emit('launch_game', levelSelected);
+}
+
+leaveGameBtn.onclick = (e) => {
+  socket.emit('closeEndWindow');
+}
+
+leaveGamePartyBtn.onclick = (e) => {
+  socket.emit('closeEndWindow');
+}
 
 function chooseMap(id) {
   document.querySelectorAll('.selectedMap').forEach(elem => {
@@ -223,3 +248,53 @@ function randomString(len) {
 
   return string;
 }
+
+function endGame(winnerGameId) {
+
+  let winnerName;
+
+  playerList.childNodes.forEach((child, i) => {
+    if(i + 1 == winnerGameId) {
+      winnerName = child.querySelectorAll('.partyName')[0].textContent
+    }
+  })
+
+  gamePlayerId = undefined;
+
+  if(winnerName && pseudo == winnerName) {
+    document.querySelector('.titleDesc').innerHTML = "You won the game!";
+    document.querySelector('.titleEnd').innerHTML = "VICTORY";
+  }
+
+  else {
+    document.querySelector('.titleDesc').innerHTML = winnerName + " won the game!";
+    document.querySelector('.titleEnd').innerHTML = "DEFEAT";
+  }
+
+  let party = parties.find(party => party.name == myPartyName);
+
+  if(party.owner == socket.id) {
+    leaveGameBtn.classList.remove('hidden');
+    leaveGamePartyBtn.classList.add('hidden');
+    restartGameBtn.classList.remove('hidden');
+  }
+  else {
+    leaveGameBtn.classList.add('hidden');
+    leaveGamePartyBtn.classList.remove('hidden');
+    restartGameBtn.classList.add('hidden');
+  }
+
+  endScreen.classList.add('opened');
+
+  clearInterval(CLOCK_RUN);
+  CLOCK_RUN = undefined;
+
+
+}
+
+socket.on('closeEndWindow', params => {
+  if(params.partyName != myPartyName) return;
+
+  endScreen.classList.remove('opened');
+  closeWindow('gameWindow');
+})
