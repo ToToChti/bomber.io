@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
   
   
   socket.on('refresh_parties', () => {
-    socket.emit('update_party', parties)
+    io.emit('update_party', parties)
   })
   
   
@@ -202,10 +202,17 @@ io.on('connection', (socket) => {
   
   
   socket.on('leave-party', () => {
+
+    var party = parties.find(party => party.players.includes(socket.id));
+    if(!party) return;
     
     party_leave(socket.id);
     
-    io.emit('update_users', users)
+    io.emit('update_players', {
+      party,
+      users
+    })
+    io.emit('update_party', parties)
   })
 
 
@@ -265,7 +272,9 @@ io.on('connection', (socket) => {
     var party = parties.find(party => party.players.includes(socket.id));
     if(!party) return;
 
-    io.emit('gameFinished', {partyName: party.name, winner: params.winner});
+    party.ingame = false;
+
+    io.emit('update_party', parties);
   })
 
   socket.on('closeEndWindow', () => {

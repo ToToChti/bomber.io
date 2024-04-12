@@ -93,10 +93,16 @@ document.querySelector('.restartGameBtn').onclick = (e) => {
 
 leaveGameBtn.onclick = (e) => {
   socket.emit('closeEndWindow');
+
+  socket.emit('refresh_parties');
 }
 
 leaveGamePartyBtn.onclick = (e) => {
-  socket.emit('closeEndWindow');
+  closeWindow("gameWindow");
+  endScreen.classList.add('hidden');
+  myPartyName = undefined;
+  displayPartyPage();
+  socket.emit('leave-party');
 }
 
 function chooseMap(id) {
@@ -107,7 +113,9 @@ function chooseMap(id) {
   levelSelected = id;
 }
 
-socket.on('update_party', parties => updateParties(parties));
+socket.on('update_party', parties => {
+  updateParties(parties);
+});
 socket.on('update_players', (params) => {
   if(params.party.name == myPartyName) {
 
@@ -147,6 +155,7 @@ socket.on('update_players', (params) => {
 
 
 function joinParty(partyName) {
+
   // If the player is already in party
   if(myPartyName) return;
 

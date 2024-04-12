@@ -559,6 +559,8 @@ function death(plID) {
 
     if(playerArray.filter(play => !play.finalDead).length <= 1) {
       endGame(playerArray.filter(play => !play.finalDead)[0].id);
+
+      socket.emit('gameFinished');
     }
   }
 }
@@ -763,12 +765,4 @@ socket.on('removeItem', params => {
   if(!extra) return console.log("Aie");
   
   entityArray.splice(entityArray.indexOf(extra), 1);
-})
-
-
-socket.on('gameFinished', params => {
-
-  if(params.partyName != myPartyName) return;
-
-  endGame(params.winner);
 })
