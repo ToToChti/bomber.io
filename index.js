@@ -17,11 +17,6 @@ app.use(express.static(publicPath));
 
 
 
-
-
-
-
-
 function getHMS() {
   var date = new Date()
   var AT = 2;
@@ -29,27 +24,6 @@ function getHMS() {
          (date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()) + ':' +
          (date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds())
 }
-
-function textRender(text) {
-  return text.toLowerCase().split('_').map(word => word.split('')[0].toUpperCase() + word.split('').slice(1).join('')).join(' ')
-}
-
-
-
-const GAMES = {
-  "Level 0": {
-    custom_code : {
-      launch: () => {
-        console.log('Hello World!')
-      },
-      next_turn: () => {},
-      win: () => {}
-    },
-    num_players: 4
-  }
-}
-
-
 
 
 var users = [],
@@ -98,19 +72,6 @@ function party_leave(socket_id) {
     console.log(`[${getHMS()}]   ${userName(socket_id)} left ${party.name}`);
   }
 }
-
-function mixArray(tab) { // Randomly mix an array
-  var i, j, tmp;
-  for (i = tab.length - 1; i > 0; i--) {
-    j = Math.floor(Math.random() * (i + 1));
-    tmp = tab[i];
-    tab[i] = tab[j];
-    tab[j] = tmp;
-  }
-  return tab;
-}
-
-
 
 
 
@@ -284,221 +245,6 @@ io.on('connection', (socket) => {
     io.emit('closeEndWindow', {partyName: party.name});
   })
   
-
-  
-
-  
-  
-  socket.onAny((eventName, param) => {
-    
-    if(eventName.split(':')[0].toUpperCase() == 'LAUNCH') {
-      
-      let gameName = eventName.split(':')[1].toUpperCase(), 
-          launchedParty = param;
-      
-      var party = parties.find(party => party.players.includes(socket.id));
-
-      party.currentPlayers = mixArray(launchedParty.currentPlayers)
-
-      if(party.owner !== socket.id) return socket.emit('alert', {
-        message: 'You need to be the party host to start a game',
-        color: 'red'
-      })
-
-      party.ingame = true;
-      party.game = {
-        name: gameName,
-        turn: 0,
-        max_players: GAMES[gameName].num_players
-      }
-
-      GAMES[gameName].custom_code['launch'](party)
-      
-      param.users = users;
-      param.party = party;
-
-      io.emit(`LAUNCH:${gameName}`, param)
-
-      io.emit('update_party', parties)
-    
-    }
-    
-    else if(eventName.split(':')[0].toUpperCase() == 'NEXT_TURN') {
-      
-      let gameName = eventName.split(':')[1].toUpperCase()                    // Store name of the game
-      
-      var party = parties.find(party => party.players.includes(socket.id));   // Find socket's party
-    
-      party.game.turn += 1;
-      if(party.game.turn >= GAMES[gameName].num_players)                      
-        party.game.turn = 0;                                                  
-      
-      
-      if(param.victory) {                                                     // victory.winner == 0 OR 1 OR false (tie) 
-        party.ingame = false;
-        
-        io.emit(`END:${gameName}`, param)
-        
-        // PROGRAMME DE STATS JOUEUR
-        
-        GAMES[gameName].custom_code['win']()
-        
-      }
-      
-      GAMES[gameName].custom_code['next_turn']()
-      
-      
-      io.emit('update_party', parties)
-       
-      param.party = party
-      io.emit(`NEXT_TURN:${gameName}`, param)
-    
-    }
-    
-  })
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  socket.on('game-change', game_name => {
-    
-    let party = parties.find(party => party.players.includes(socket.id));
-    
-    party.game = {
-      name: game_name,
-      turn : 0,
-      num_players : GAMES[game_name].num_players
-    }
-    
-    io.emit('game-change', {
-      party,
-      game_name
-    })
-    
-  })
-  
-  socket.on('message-sent', message => {
-    
-    if(!message) return
-    
-    let party = parties.find(party => party.players.includes(socket.id));
-    if(!party) return
-    
-    io.emit('update_users', users)
-    io.emit('message-received', {
-      party,
-      author: socket.id,
-      message
-    })
-  })
-  
-  
-  
-  
-  
-  socket.on('log-in', params => {
-    let accounts = require('./accounts.json')
-    
-    if(!params.username || !params.password)
-      socket.emit('logged-in', {
-        success: false,
-        error: 'An error occured'
-      })
-    
-    else if(!accounts[params.username] || !accounts[params.username].password)
-      socket.emit('logged-in', {
-        success: false,
-        error: 'No account exists with this username'
-      })
-    
-    else if(String(accounts[params.username].password) !== String(params.password)) {
-      socket.emit('logged-in', {
-        success: false,
-        error: 'Incorrect password'
-      })
-    }
-    
-    else if(accounts[params.username].password == params.password) {
-      
-      users.find(user => user.id == socket.id).login = true;
-      users.find(user => user.id == socket.id).username = params.username;
-      
-      socket.emit('logged-in', {
-        success: true,
-        error: false,
-        user: users.find(user => user.id == socket.id),
-        account: accounts[params.username]
-      })
-      
-      io.emit('update_users', users)
-    }
-    
-  })
-  
-  
-  socket.on('create-account', params => {
-    var accounts = JSON.parse(fs.readFileSync('./accounts.json'))
-    
-    if(!params.username)
-      socket.emit('created-account', {
-        success: false,
-        error: 'An error occured'
-      })
-    
-    else if(accounts[params.username])
-      socket.emit('created-account', {
-        success: false,
-        error: 'An account with this username already exists'
-      })
-    
-    else {
-      
-      var password = Math.floor(1000 + Math.random() * 9000);
-      
-      accounts[params.username] = {
-        password,
-        games: [
-          {
-            name: "Morpion",
-            victories: 0,
-            defeats: 0,
-            ties: 0
-          }
-        ]
-      }
-      
-      users.find(user => user.id == socket.id).login = true;
-      
-      fs.writeFileSync('./accounts.json', JSON.stringify(accounts, null, 2))
-      
-      socket.emit('created-account', {
-        success: true,
-        error: false,
-        account: accounts[params.username]
-      })
-    }
-    
-  })
-  
-  socket.on('remove-account', username => {
-    var accounts = JSON.parse(fs.readFileSync('./accounts.json'))
-    
-    delete accounts[username]
-    
-    
-    fs.writeFileSync('./accounts.json', JSON.stringify(accounts, null, 2))
-  })
-            
-  
-  
   
   socket.on('disconnect', () => {
     
@@ -509,23 +255,5 @@ io.on('connection', (socket) => {
     io.emit('update_users', users)
     
     console.log(`[${getHMS()}]   Disconnection : ${userName(socket.id)}`);
-  })
-  
-  
-  
-  
-  
-  // ADMIN !!
-  socket.on('log-users', () => {
-    console.log(users)
-  })
-  
-  socket.on('log-parties', () => {
-    console.log(parties)
-  })
-  
-  socket.on('log-accounts', () => {
-    console.log(JSON.stringify(JSON.parse(fs.readFileSync('./accounts.json')), null, 2))
-  })
-  
+  })  
 })
