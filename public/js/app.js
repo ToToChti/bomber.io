@@ -34,8 +34,6 @@ function Alert(msg) {
 
 function playBtn() {
 
-  console.log("Play Button Pressed")
-
   let party = parties.find(party => party.name == myPartyName);
   
   if(!party || party.inGame) return;

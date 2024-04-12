@@ -762,7 +762,7 @@ socket.on('removeItem', params => {
 
   let extra = entityArray.find(entity => entity.constructor.name == 'Extra' && entity.col == params.x && entity.row == params.y);
 
-  if(!extra) return console.log("Aie");
+  if(!extra) return;
   
   entityArray.splice(entityArray.indexOf(extra), 1);
 })
