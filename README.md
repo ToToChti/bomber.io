@@ -2,6 +2,8 @@
 
 *Note to the reader: This game is not finished, and many bugs are still remaining. Maybe they'll be fixed one day. Thanks for your comprehension*
 
+*Project realised by BOSSUT Siméon & LORIDANT Tom*
+
 ## Description of the project
 
 The project we developped is a simple bomberman.
