@@ -37,7 +37,7 @@ let expTrail = {};
 let expEnd = {};
 let ORIENT = ['L', 'R', 'B', 'T'];
 
-for(orient of ORIENT) {
+for(let orient of ORIENT) {
   expEnd[orient] = new Image();
   expEnd[orient].src = `../images/explosion_end${orient}.png`;
 
@@ -94,7 +94,7 @@ class Player {
     this.height = width;
     this.expRadius = 1;
     this.numBomb = 1;
-    this.lives = 1;
+    this.lives = 3;
     this.finalDead = false;
     this.perforation = false;
     this.onBomb = false;
