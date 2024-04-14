@@ -60,7 +60,7 @@ let HIT_BOX = 5;
 const effectAppearTime = 0.07;
 const effectExplosionTime = 0.7;
 
-const dropItemProbability = 1/4;
+const dropItemProbability = 1/2;
 const charRatio = 0.8;
 
 
